@@ -24,7 +24,13 @@ int main() {
 
 	AddString("C/C++/C#");
 	ModifyString(pStrign1, "HelloWorld!dddd");
-
+	RemoveString(pStrign1);
+	//ShowInformation();
+	AddString("ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+	AddString("abcdefghijklmnopqrstuvwxyz");
+	AddString("aaaaaaa");
+	QueryStringByContent("rld");
+	ShowEachCharInformation();
 
 
 
