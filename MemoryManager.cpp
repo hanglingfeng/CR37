@@ -1,69 +1,29 @@
-//空间未被使用则用0填充，字符串结尾也有0，注意区分
+//在指定数组内存储字符串
+//1.增加: 对字符串的增加操作，最长100字节
+//2.删除：对字符串的删除操作
+//3.修改：修改指定的字符串，如果空间长度不够则存储在其他地方，原字符串视为被删除
+//4.查询：按字符串内容查找字符串的基本信息，支持模糊查找
+//5.统计：统计每个字母的出现次数和比例。
+//6.显示存储信息：按顺序显示已分配(U)、未分配(F)资源,例如10字节空间，显示UFUUFFFUUU
+//7.碎片整理：增删改中出现了不连续的“孔隙”，整理后使得这些“孔隙”连续且可用
 
 #define _CRT_SECURE_NO_WARNINGS
-#define MAX_LENGTH 99
+#define SIZE 1024*1024
+
 #include "MemoryManager.h"
+#include <stdio.h>
 #include <string.h>
 #include <ctype.h>
 
 struct _item {
-	unsigned char flagAndsize;//最高bit为1代表占用空间，0代表空间被释放。其他7bit代表字符串占用字节数
+	unsigned char flagAndsize;//最高bit为1代表空间被占用，0代表空间被释放。其他7bit代表字符串占用字节数
 	char *str;
 };
 typedef _item Item;
 
-char *g_StringTable[SIZE / 2] = {};//保存所有字符串的地址，遍历时发现NULL，则停止遍历
-extern char g_szBuff[SIZE] = {};
-char *pCurrent = g_szBuff;//指向当前可用位置
-int currentIndex = 0;//当前可用位置的下标
-
-
-////只在内部使用，不对外暴露，所以定义为static。即使空间从未使用也无法返回g_szBuff，需要在其他地方判断
-//static char *DoSearchUnusedSpace(const char *pSearchStart) {
-//	int beg = pSearchStart - g_szBuff;
-//	int end = SIZE - beg;//end已超出下标
-//
-//	for (int i = beg; i != end - 1; ++i) {//查找连续的2个0，所以减1，防止越界
-//		if (g_szBuff[i] == 0 &&
-//			g_szBuff[i + 1] == 0) {
-//			return g_szBuff + i + 1;
-//		}
-//	}
-//	return NULL;
-//}
-//
-////检查是否是有效字符串，长度必须小于等于MAX_LENGTH
-//static bool IsGoodString(const  char *str) {
-//	if (strlen(str) <= MAX_LENGTH) {
-//		return true;
-//	}
-//	return false;
-//}
-//
-//
-////打算废弃此函数。找出第一个未使用的空间，返回其地址，未找到则返回NULL，参数表示从起始搜索地址
-//char *SearchUnusedSpace222222222222222222222(const char *pSearchStart) {
-//	if (pSearchStart < g_szBuff) {
-//		printf("参数searchStart太小\n");
-//		return NULL;
-//	}
-//	else if (pSearchStart >= g_szBuff + SIZE) {
-//		printf("参数searchStart太大\n");
-//		return NULL;
-//	}
-//	else {
-//		return DoSearchUnusedSpace(pSearchStart);
-//	}
-//}
-//
-//
-////找出第一个未使用的空间，返回其地址，未找到则返回NULL
-//char *SearchUnusedSpace() {
-//	if (g_szBuff[0] == 0 && g_szBuff[1] == 0) {
-//		return g_szBuff;
-//	}
-//	return DoSearchUnusedSpace(g_szBuff);
-//}
+char g_szBuff[1024 * 1024];
+char *stringTable[SIZE / 2] = {};//保存所有字符串的地址，遍历时发现NULL，则停止遍历
+int currentIndex = 0;//当前可用位置的下标，新增字符串时保存在此处
 
 
 //字符串长度是否符合要求
@@ -91,7 +51,6 @@ bool GetStringFlagByIndex(int index) {
 	return used;
 }
 
-
 //测试字符串是否有效
 bool IsValidString(char *source) {
 	bool valid = true;
@@ -117,8 +76,7 @@ bool IsValidString(char *source) {
 	return valid;
 }
 
-
-//测试字符串是否被启用，即标记为已删除
+//测试字符串是否被弃用，即标记为已删除
 bool IsDeprecatedString(char *source) {
 	bool deprecated = true;
 	if (source > g_szBuff &&source < g_szBuff + currentIndex - 1) {	//范围正确
@@ -143,8 +101,6 @@ bool IsDeprecatedString(char *source) {
 	return deprecated;
 }
 
-
-
 //寻找第一个被标记为已删除字符串的下标,参数代表从哪里开始搜索,如果不存在，返回-1
 int GetFirstDeprecatedIndex(int startIndex) {
 	for (int i = startIndex; i < currentIndex; ++i) {
@@ -152,8 +108,6 @@ int GetFirstDeprecatedIndex(int startIndex) {
 			return i -1;//flagAndsize在字符串前面1字节
 		}
 	}
-
-	//printf("没有被标记为已删除的字符串\n");
 	return -1;
 }
 
@@ -164,15 +118,15 @@ int GetFirstValidIndex(int startIndex) {
 			return i - 1;//flagAndsize在字符串前面1字节
 		}
 	}
-
-	//printf("空间尚未存放任何有效字符串\n");
 	return -1;
 }
-
 
 //碎片整理
 void Defragment() {
 	int deprecatedIndex = GetFirstDeprecatedIndex(0);
+	if (deprecatedIndex < 0) {
+		return;
+	}
 	int size = GetStringSizeByIndex(deprecatedIndex);
 	int validIndex = GetFirstValidIndex(deprecatedIndex + 1 + size + 1);
 
@@ -200,7 +154,6 @@ char *SaveString(int size, const char *source) {
 	return destination;
 }
 
-
 //添加字符串功能,返回字符串在缓冲区中的地址，失败返回NULL
 char *AddString(const char *source) {
 	char *address = NULL;
@@ -226,7 +179,6 @@ char *AddString(const char *source) {
 	return address;
 }
 
-
 //移除字符串，返回true代表成功
 bool RemoveString(char *source) {
 	if (IsValidString(source)) {
@@ -238,7 +190,6 @@ bool RemoveString(char *source) {
 	printf("欲移除的字符串地址无效\n");
 	return false;
 }
-
 
 //修改字符串
 bool ModifyString(char *oldString,const char *newString) {
@@ -254,6 +205,8 @@ bool ModifyString(char *oldString,const char *newString) {
 				strcpy(oldString, newString);
 				for (int i = newLength + 1; i < oldLength - 1; ++i) {
 					oldString[i] = '\0';//多余的字节用0填充，遍历时既不属于valid，也不属于deprecated
+					*(oldString - 1) = (unsigned char)(newLength + 1);//改变大小
+					*(oldString - 1) |= 0x80;
 				}
 				return true;
 			}
@@ -284,14 +237,10 @@ bool ModifyString(char *oldString,const char *newString) {
 		}		
 	}
 	else {
-		printf("参数source指向的字符串是无效的\n");
+		printf("字符串地址无效\n");
 	}
 	return false;
 }
-
-
-
-
 
 //读取并丢弃一行中多余的输出
 void EatLine() {
@@ -357,16 +306,14 @@ void ShowInformation() {
 	}
 }
 
-
-//清空g_StringTable内容
+//清空stringTable内容
 void EmptyStringTable(){
-	for (int i = 0; i < sizeof(g_StringTable)/ sizeof(g_StringTable[0]); ++i) {
-		g_StringTable[i] = NULL;
+	for (int i = 0; i < sizeof(stringTable)/ sizeof(stringTable[0]); ++i) {
+		stringTable[i] = NULL;
 	}
 }
 
-
-//获取所有字符串首地址，存在g_StringTable里
+//获取所有字符串首地址，存在stringTable里
 void GetAllString() {
 	EmptyStringTable();
 	int validIndex = GetFirstValidIndex(0);
@@ -374,7 +321,7 @@ void GetAllString() {
 	int i = 0;
 
 	while (validIndex >= 0) {		
-		g_StringTable[i] = g_szBuff + validIndex + 1;
+		stringTable[i] = g_szBuff + validIndex + 1;
 		++i;
 		int size = GetStringSizeByIndex(validIndex);
 		lastIndex = validIndex + size + 1;
@@ -384,40 +331,48 @@ void GetAllString() {
 
 //查寻字符串,支持模糊查找
 void QueryStringByContent(const char *subString) {
+	bool found = false;
 	GetAllString();
-	for (int i = 0; i < sizeof(g_StringTable) / sizeof(g_StringTable[0]); ++i) {
-		if (g_StringTable[i]) {
-			if (strstr(g_StringTable[i], subString)) {
-				printf("管理地址%p：%s\n", g_StringTable[i] - 1, g_StringTable[i]);
+	for (int i = 0; i < sizeof(stringTable) / sizeof(stringTable[0]); ++i) {
+		if (stringTable[i]) {
+			if (strstr(stringTable[i], subString)) {
+				found = true;
+				printf("地址：%p, %s\n", stringTable[i], stringTable[i]);
 			}
 		}
 	}
+	if (!found) {
+		printf("未找到匹配的字符串\n");
+	}
 }
-
 
 //显示每个字母的出现次数和比例
 void ShowEachCharInformation() {
 	int alphabet[26 + 6 + 26] = {};//ASCII中Z和a之间有6个字符，将来遍历时直接忽略这6个下标
 	int allCount = 0;
 	GetAllString();
-	for (int i = 0; i < sizeof(g_StringTable) / sizeof(g_StringTable[0]); ++i) {
-		if (g_StringTable[i]) {
-			const char *pString = g_StringTable[i];
+	for (int i = 0; i < sizeof(stringTable) / sizeof(stringTable[0]); ++i) {
+		if (stringTable[i]) {
+			const char *pString = stringTable[i];
 			while (*pString != '\0') {
+				++allCount;
 				if (isalpha(*pString)) {
-					++alphabet[*pString - 'A'];
-					++allCount;
+					++alphabet[*pString - 'A'];					
 				}
 				++pString;
 			}
 
 		}
 	}
-
-	for (int i = 0; i < 26; ++i) {
-		printf("%c出现%5d次，占比%.2f%%\n", 'A' + i, alphabet[i], 100 * (double)alphabet[i] / allCount);
+	if (allCount) {
+		for (int i = 0; i < 26; ++i) {
+			printf("%c出现%5d次，占比%.2f%%\n", 'A' + i, alphabet[i], 100 * (double)alphabet[i] / allCount);
+		}
+		for (int i = 0; i < 26; ++i) {
+			printf("%c出现%5d次，占比%.2f%%\n", 'a' + i, alphabet[i + 26 + 6], 100 * (double)alphabet[i + 26 + 6] / allCount);
+		}
 	}
-	for (int i = 0; i < 26; ++i) {
-		printf("%c出现%5d次，占比%.2f%%\n", 'a' + i, alphabet[i + 26 + 6], 100 * (double)alphabet[i + 26 + 6] / allCount);
+	else {
+		printf("尚未有数据\n");
 	}
 }
