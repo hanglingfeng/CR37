@@ -1,12 +1,22 @@
 #pragma once
-#define MAX_LENGTH 99
+#define LENGTH 99
+#include <stdbool.h>
 
-char *AddString(const char *source);
-bool RemoveString(char *source);
-bool ModifyString(char *oldString, const char *newString);
-void QueryStringByContent(const char *subString);
-void Defragment();
-void ShowInformation();
-void ShowEachCharInformation();
+
+struct _item {
+	unsigned char stringSize;
+	bool isUsed;
+	bool hasEscapeChar;	
+};
+typedef struct _item Item;
+
 void EatLine();
-bool IsValidString(char *source);
+char *AddString(const char *source, unsigned char stringSize, bool hasEscapeChar);
+void QueryStringByContent(const char *subString);
+void QueryStringByContentWithEscapeChar(const char *subString, int subStringSize);
+void ShowEachCharInformation();
+void ShowInformation();
+bool RemoveItem(Item *item);
+void Defragment();
+bool ModifyItem(Item *oldItem, const char *newString, unsigned char newStringSize, bool hasEscapeChar);
+bool SearchItem(Item *item);
