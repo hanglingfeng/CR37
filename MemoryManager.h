@@ -1,22 +1,22 @@
 #pragma once
 #define LENGTH 99
-#include <stdbool.h>
+
 
 
 struct _item {
-	unsigned char stringSize;
+	unsigned char nStringSize;
 	bool isUsed;
-	bool hasEscapeChar;	
+		
 };
 typedef struct _item Item;
 
 void EatLine();
-char *AddString(const char *source, unsigned char stringSize, bool hasEscapeChar);
-void QueryStringByContent(const char *subString);
-void QueryStringByContentWithEscapeChar(const char *subString, int subStringSize);
+size_t AddString(const char *pSource, unsigned char nStringSize);
+void QueryStringByContent(const char *pSubString);
+
 void ShowEachCharInformation();
 void ShowInformation();
-bool RemoveItem(Item *item);
+bool RemoveItem(Item *pItem);
 void Defragment();
-bool ModifyItem(Item *oldItem, const char *newString, unsigned char newStringSize, bool hasEscapeChar);
-bool SearchItem(Item *item);
+bool ModifyItem(Item *pOldItem, const char *pNewString, unsigned char pNewStringSize);
+bool SearchItem(Item *pItem);
