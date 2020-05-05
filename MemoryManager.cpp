@@ -20,7 +20,7 @@
 
 char g_szBuff[1024 * 1024];
 Item *g_itemTable[SIZE / 2] = {NULL};//保存所有字符串的地址，遍历时发现NULL，则停止遍历
-int g_nCurrentIndex = 0;//当前可用位置的下标，新增字符串时保存在此处
+int g_nSavingIndex = 0;//当前可用位置的下标，新增字符串时保存在此处
 int g_nValidIndex = -1;
 int g_nDeprecatedIndex = -1;
 
@@ -31,7 +31,7 @@ int g_nDeprecatedIndex = -1;
 //返回值：
 //	bool：nSize合适返回true，否则返回false
 bool IsSizeSuit(int nSize) {
-	return nSize <= LENGTH + 1;
+	return nSize <= INPUT_LENGTH + 1;
 }
 
 //空间是否足够存放
@@ -40,7 +40,7 @@ bool IsSizeSuit(int nSize) {
 //返回值：
 //	bool：足够返回true，否则返回false
 bool IsSpaceEnough(int nNeed) {
-	bool bIsEnough = SIZE - g_nCurrentIndex >= nNeed;
+	bool bIsEnough = SIZE - g_nSavingIndex >= nNeed;
 	return bIsEnough;
 }
 
@@ -54,7 +54,7 @@ int GetFirstDeprecatedIndex(int nStartIndex) {
 	if (g_szBuff[0] == '\0') {
 		return -1;
 	}
-	while (nStartIndex < g_nCurrentIndex) {
+	while (nStartIndex < g_nSavingIndex) {
 		unsigned char chStringSize = g_szBuff[nStartIndex];
 		bool bIsUsed = g_szBuff[nStartIndex + 1];
 		if (!chStringSize) {//长字符串改短，会多出'\0'，算是未使用的空间，可以覆盖
@@ -81,7 +81,7 @@ int GetFirstValidIndex(int nStartIndex) {
 	if (g_szBuff[0] == '\0') {
 		return -1;
 	}
-	while (nStartIndex < g_nCurrentIndex) {
+	while (nStartIndex < g_nSavingIndex) {
 		unsigned char stringSize = g_szBuff[nStartIndex];
 		bool isUsed = g_szBuff[nStartIndex + 1];
 		if (!stringSize) {//长字符串改短，会多出'\0'，不算有效字符，要跳过
@@ -152,7 +152,7 @@ void Defragment() {
 		nValidIndex += nMoveSize;
 		nValidIndex = GetFirstValidIndex(nValidIndex);//定位下一个有效下标
 	}
-	g_nCurrentIndex = nDeprecatedIndex;//下一个新字符串的保存在此下标
+	g_nSavingIndex = nDeprecatedIndex;//下一个新字符串的保存在此下标
 }
 
 //保存字符串，参数1是字符串占用字节
@@ -164,14 +164,14 @@ void Defragment() {
 //	char *	返回管理地址
 //caller负责检查字符串的size小于等于LENGTH+1，以及剩余空间是否足够
 char *SaveString(const char *pSource, unsigned char nStringSize) {
-	char *destination = g_szBuff + g_nCurrentIndex;
+	char *destination = g_szBuff + g_nSavingIndex;
 	Item *item = (Item *)destination;
 	item->nStringSize = nStringSize;
 	item->isUsed = true;
-	g_nCurrentIndex += BIAS;//字符串保存在此下标指示的位置
+	g_nSavingIndex += BIAS;//字符串保存在此下标指示的位置
 
-	memmove(g_szBuff + g_nCurrentIndex, pSource, nStringSize);
-	g_nCurrentIndex += nStringSize;//更新下标，下一次新增在此下标
+	memmove(g_szBuff + g_nSavingIndex, pSource, nStringSize);
+	g_nSavingIndex += nStringSize;//更新下标，下一次新增在此下标
 	return destination;
 }
 
@@ -262,7 +262,7 @@ bool ModifyItem(Item *pOldItem, const char *pNewString, unsigned char chNewStrin
 			return true;
 		}
 		else {
-			char tempItem[LENGTH + 1 + BIAS] = { '\0' };
+			char tempItem[INPUT_LENGTH + 1 + BIAS] = { '\0' };
 			memmove(tempItem, pOldItem, pOldItem->nStringSize + BIAS);
 			RemoveItem(pOldItem);
 			Defragment();

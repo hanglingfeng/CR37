@@ -141,7 +141,7 @@ int ReadStringWithEscapeChar(char pBuff[]) {
 			}
 		}
 		++i;//i代表的位置尚未被赋值
-		if (i > LENGTH) {//用户输入太长，应该废弃
+		if (i > INPUT_LENGTH) {//用户输入太长，应该废弃
 			bTooLong = true;
 			break;
 		}
@@ -164,7 +164,7 @@ int ReadStringWithEscapeChar(char pBuff[]) {
 void UserAddString() {
 	puts("1.普通字符串    2.带转义字符的字符串，支持\\a \\b \\f \\n \\r \\t \\v \\0。   \? \"等可以直接输入，不视为转义字符");
 	printf("请输入序号：");
-	char aryBuff[LENGTH + 1] = { '\0' };
+	char aryBuff[INPUT_LENGTH + 1] = { '\0' };
 	int ch = getchar();
 	size_t nIndex = 0;
 	EatLine();
@@ -236,7 +236,7 @@ void UserModifySring() {
 	
 
 	char *pAddress = NULL;
-	char aryBuff[LENGTH + 1] = {'\0'};
+	char aryBuff[INPUT_LENGTH + 1] = {'\0'};
 	printf("请输入要修改的字符串地址：");
 	if (scanf("%x", (unsigned *)&pAddress) == 1) {
 		EatLine();
@@ -291,7 +291,7 @@ void UserModifySring() {
 void UserQuaryString() {
 	puts("1.查询普通字符串    2.查询带转义字符的字符串，支持\\a \\b \\f \\n \\r \\t \\v \\0。   \? \"等可以直接输入，不视为转义字符");
 	printf("请输入序号：");
-	char aryBuff[LENGTH + 1] = { '\0' };
+	char aryBuff[INPUT_LENGTH + 1] = { '\0' };
 	int ch = getchar();
 	EatLine();
 

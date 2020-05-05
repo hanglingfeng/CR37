@@ -1,5 +1,5 @@
 #pragma once
-#define LENGTH 99
+#define INPUT_LENGTH 99
 
 
 
